@@ -12,9 +12,11 @@ import (
 )
 
 const (
-	requestProtocol = "http"
-	tcpServerHost   = "localhost"
-	tcpServerPort   = 8081
+	requestProtocol              = "http"
+	tcpServerHost                = "localhost"
+	tcpServerPort                = 8081
+	urlGetConnectedClients       = "/clients/connected"
+	urlSendMessageToClientsByIds = "/clients/message"
 )
 
 type ResourceError struct {
@@ -51,7 +53,7 @@ func main() {
 
 	var clientParams []ClientParams
 
-	httpStatus, responseBody, err := SendJSONRequest("GET", requestProtocol+"://"+tcpServerHost+":"+strconv.Itoa(tcpServerPort), nil, nil, &clientParams)
+	httpStatus, responseBody, err := SendJSONRequest("GET", requestProtocol+"://"+tcpServerHost+":"+strconv.Itoa(tcpServerPort)+urlGetConnectedClients, nil, nil, &clientParams)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Error SendJSONRequest . httpCode: %d. responseBody: %v. err: %v.", httpStatus, responseBody, err))
 	}
@@ -67,7 +69,7 @@ func main() {
 	}
 
 	// Sending message from first client to second
-	httpStatus, responseBody, err = SendJSONRequest("POST", requestProtocol+"://"+tcpServerHost+":"+strconv.Itoa(clientParams[0].HttpPort), data, nil, nil)
+	httpStatus, responseBody, err = SendJSONRequest("POST", requestProtocol+"://"+tcpServerHost+":"+strconv.Itoa(clientParams[0].HttpPort)+urlSendMessageToClientsByIds, data, nil, nil)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Error SendJSONRequest. httpCode: %d. responseBody: %v. err: %v.", httpStatus, responseBody, err))
 	}
