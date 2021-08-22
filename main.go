@@ -7,8 +7,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
+	"time"
 )
 
 const (
@@ -43,24 +46,41 @@ func (r ResourceError) Error() string {
 }
 
 func main() {
-	for i := 1; i <= 10; i++ {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(dir)
+
+	for i := 1; i <= 2; i++ {
 		port := tcpServerPort
-		cmnd := exec.Command("main.exe", strconv.Itoa(port+i))
-		cmnd.Start()
+
+		cmd := exec.Command("cmd", "/C", "start main "+strconv.Itoa(port+i), dir)
+
+		cmd.Stdout = os.Stdout
+		cmd.Stdin = os.Stdin
+		cmd.Stderr = os.Stderr
+		err = cmd.Start()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 	}
 
 	// Getting all connected clients' params
+
+	time.Sleep(1 * time.Second)
 
 	var clientParams []ClientParams
 
 	httpStatus, responseBody, err := SendJSONRequest("GET", requestProtocol+"://"+tcpServerHost+":"+strconv.Itoa(tcpServerPort)+urlGetConnectedClients, nil, nil, &clientParams)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("Error SendJSONRequest . httpCode: %d. responseBody: %v. err: %v.", httpStatus, responseBody, err))
+		log.Fatal(fmt.Sprintf("Error SendJSONRequest . httpCode: %d. responseBody: %v. err: %v.", httpStatus, string(responseBody), err))
 	}
 
 	var message = MessageToClients{
 		Ids:  []string{clientParams[1].Id},
-		Text: "hello client" + clientParams[1].Name + "! This is a message from client " + clientParams[0].Name,
+		Text: "hello client " + clientParams[1].Name + "! This is a message from client " + clientParams[0].Name,
 	}
 
 	data, err := json.Marshal(message)
@@ -71,7 +91,7 @@ func main() {
 	// Sending message from first client to second
 	httpStatus, responseBody, err = SendJSONRequest("POST", requestProtocol+"://"+tcpServerHost+":"+strconv.Itoa(clientParams[0].HttpPort)+urlSendMessageToClientsByIds, data, nil, nil)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("Error SendJSONRequest. httpCode: %d. responseBody: %v. err: %v.", httpStatus, responseBody, err))
+		log.Fatal(fmt.Sprintf("Error SendJSONRequest. httpCode: %d. responseBody: %v. err: %v.", httpStatus, string(responseBody), err))
 	}
 }
 
