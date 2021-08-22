@@ -65,6 +65,8 @@ func main() {
 			log.Fatal(err)
 		}
 
+		// Waiting for 0.2 second to prevent generating similar pseudo-random stacks
+		time.Sleep(200 * time.Millisecond)
 	}
 
 	// Getting all connected clients' params
